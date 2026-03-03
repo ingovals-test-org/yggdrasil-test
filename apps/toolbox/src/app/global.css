@@ -1,0 +1,6 @@
+@import "@yggdrasil/ui/theme.css";
+@theme inline {
+  --font-sans: var(--font-pt-sans);
+  --font-mono: var(--font-pt-mono);
+  --font-serif: var(--font-pt-serif);
+}

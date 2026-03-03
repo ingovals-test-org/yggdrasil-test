@@ -1,0 +1,5 @@
+{
+  "name": "sample-dotnet-library",
+  "projectType": "library",
+  "tags": ["type:lib", "platform:dotnet"]
+}

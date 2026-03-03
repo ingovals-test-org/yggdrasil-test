@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "neverConnectToCloud": true,
+  "plugins": [
+    "@nx/dotnet",
+    {
+      "plugin": "@nx/js/typescript",
+      "options": {
+        "typecheck": false
+      }
+    },
+    {
+      "plugin": "@nx/docker",
+      "options": {
+        "buildTarget": {
+          "name": "docker:build",
+          "args": [
+            "--label", "org.opencontainers.image.title={projectName}",
+            "--label", "org.opencontainers.image.source={projectRoot}",
+            "--label", "org.opencontainers.image.revision={commitSha}",
+            "--label", "org.opencontainers.image.created={currentDate}",
+            "--build-arg", "BUILD_DATE={currentDate|YYYY-MM-DD}",
+            "--build-arg", "APP_VERSION={env.VERSION}"
+          ],
+          "env": {
+            "DOCKER_BUILDKIT": "1"
+          }
+        },
+        "runTarget": {
+          "name": "docker:run"
+        }
+      }
+    }
+  ],
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@yggdrasil/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Storybook component documentation application",
+  "files": [
+    "storybook-static"
+  ],
+  "scripts": {
+    "dev": "storybook dev",
+    "build": "storybook build",
+    "lint": "biome check",
+    "format": "biome format --write .",
+    "fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@yggdrasil/config": "workspace:*",
+    "@yggdrasil/ui": "workspace:*",
+    "@hookform/resolvers": "catalog:",
+    "@storybook/addon-a11y": "10.1.11",
+    "@storybook/addon-docs": "10.1.11",
+    "@storybook/nextjs": "10.1.11",
+    "@tailwindcss/postcss": "^4",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "next-intl": "catalog:",
+    "react": "catalog:",
+    "react-hook-form": "catalog:",
+    "storybook": "10.1.11",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:"
+  }
+}

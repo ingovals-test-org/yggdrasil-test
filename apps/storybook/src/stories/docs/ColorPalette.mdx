@@ -1,0 +1,379 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title='Docs/Color Palette' />
+
+# Color System
+
+The design system uses a carefully selected color palette to create a consistent visual language across all applications. Our color system is built using the OKLCH color space for better perceptual uniformity and accessibility.
+
+## Base Colors
+
+These are the foundational colors that define our UI. They automatically adapt between light and dark modes.
+
+<div className='sb-unstyled'>
+  <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-background h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Background (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--background</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--background)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-background h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Background (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--background</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--background)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-foreground h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Foreground (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--foreground</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--foreground)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-foreground h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Foreground (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--foreground</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--foreground)</div>
+    </div>
+  </div>
+</div>
+
+## Brand Colors
+
+These colors represent our brand identity and are used for primary actions, highlights, and key UI elements.
+
+<div className='sb-unstyled'>
+  <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-primary h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Primary (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--primary</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--primary)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-primary h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Primary (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--primary</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--primary)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-secondary h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Secondary (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--secondary</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--secondary)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-secondary h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Secondary (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--secondary</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--secondary)</div>
+    </div>
+  </div>
+</div>
+
+## UI Colors
+
+These colors are used for various UI elements and states.
+
+<div className='sb-unstyled'>
+  <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-muted h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Muted (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--muted</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--muted)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-muted h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Muted (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--muted</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--muted)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-accent h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Accent (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--accent</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--accent)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-accent h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Accent (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--accent</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--accent)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-destructive h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Destructive (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--destructive</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--destructive)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-destructive h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Destructive (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--destructive</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--destructive)</div>
+    </div>
+  </div>
+</div>
+
+## Border and Input Colors
+
+<div className='sb-unstyled'>
+  <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-border h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Border (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--border</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--border)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-border h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Border (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--border</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--border)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-ring h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Ring (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--ring</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--ring)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div className='bg-ring h-8 w-8 rounded-full'></div>
+        <div>
+          <h3 className='text-sm font-medium'>Ring (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--ring</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--ring)</div>
+    </div>
+  </div>
+</div>
+
+## Chart Colors
+
+These colors are specifically designed for data visualizations to ensure clarity and accessibility.
+
+<div className='sb-unstyled'>
+  <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--chart-1)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Chart 1 (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--chart-1</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--chart-1)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--chart-1)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Chart 1 (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--chart-1</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--chart-1)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--chart-2)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Chart 2 (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--chart-2</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--chart-2)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--chart-2)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Chart 2 (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--chart-2</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--chart-2)</div>
+    </div>
+  </div>
+</div>
+
+## Sidebar Colors
+
+Special colors used for sidebar components.
+
+<div className='sb-unstyled'>
+  <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-2'>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--sidebar)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Sidebar (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--sidebar</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--sidebar)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--sidebar)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Sidebar (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--sidebar</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--sidebar)</div>
+    </div>
+    <div className='rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--sidebar-primary)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Sidebar Primary (Light)</h3>
+          <p className='text-muted-foreground text-xs'>--sidebar-primary</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--sidebar-primary)</div>
+    </div>
+    <div className='dark rounded-lg border p-4'>
+      <div className='mb-2 flex items-center gap-2'>
+        <div
+          className='h-8 w-8 rounded-full'
+          style={{ backgroundColor: 'var(--sidebar-primary)' }}
+        ></div>
+        <div>
+          <h3 className='text-sm font-medium'>Sidebar Primary (Dark)</h3>
+          <p className='text-muted-foreground text-xs'>--sidebar-primary</p>
+        </div>
+      </div>
+      <div className='font-mono text-xs'>var(--sidebar-primary)</div>
+    </div>
+  </div>
+</div>
+
+## Using Colors in Code
+
+Our color system is implemented using CSS custom properties. Here's how to use them:
+
+### In Tailwind CSS
+
+```jsx
+// Using colors in components
+<div className='bg-background text-foreground'>
+  <button className='bg-primary text-primary-foreground'>Primary Button</button>
+</div>
+```
+
+### In CSS
+
+```css
+.my-component {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.my-component:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+```
+
+## Color Accessibility
+
+All color combinations in our system have been tested to meet WCAG 2.1 AA standards for contrast. When using colors, especially for text and interactive elements, always ensure sufficient contrast between foreground and background colors.
+
+## Color Variables
+
+Our color system is defined using CSS custom properties in `packages/ui/src/theme.css`. The system automatically adapts between light and dark modes based on the `.dark` class applied to the document.

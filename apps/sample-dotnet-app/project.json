@@ -1,0 +1,16 @@
+{
+  "name": "sample-dotnet-app",
+  "projectType": "application",
+  "root": "apps/sample-dotnet-app",
+  "tags": ["type:app", "platform:dotnet"],
+  "targets": {
+    "docker:build": {
+      "dependsOn": ["publish", "^build"]
+    },
+    "docker:run": {
+      "options": {
+        "args": ["-p", "8080:8080"]
+      }
+    }
+  }
+}

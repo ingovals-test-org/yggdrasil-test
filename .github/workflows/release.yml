@@ -1,0 +1,242 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Version & Changelog
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_sha: ${{ steps.push.outputs.release_sha }}
+      prev_tag: ${{ steps.prev-tag.outputs.prev_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install git-cliff
+        run: |
+          curl -sSfL \
+            https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-x86_64-unknown-linux-gnu.tar.gz \
+            | tar xz -C /tmp git-cliff
+          sudo mv /tmp/git-cliff /usr/local/bin/git-cliff
+
+      - name: Get previous tag
+        id: prev-tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Determine next version
+        id: version
+        run: |
+          VERSION=$(git cliff --bumped-version 2>/dev/null || echo "")
+          VERSION=${VERSION#v}
+          if [ -z "$VERSION" ] || [ "v$VERSION" = "${{ steps.prev-tag.outputs.prev_tag }}" ]; then
+            echo "No version-bumping commits found. Skipping release."
+            echo "version=" >> $GITHUB_OUTPUT
+          else
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate CHANGELOG.md
+        if: steps.version.outputs.version != ''
+        run: git cliff --bump -o CHANGELOG.md
+
+      - name: Commit, tag and push
+        id: push
+        if: steps.version.outputs.version != ''
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add CHANGELOG.md
+          git commit -m "chore(release): publish [skip ci]"
+          git tag "v$VERSION"
+          git push
+          git push origin "v$VERSION"
+          echo "release_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+  get-affected-apps:
+    name: Get affected apps
+    needs: release
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.affected.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.release_sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Determine affected apps
+        id: affected
+        run: |
+          BASE="${{ needs.release.outputs.prev_tag }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-list --max-parents=0 HEAD)
+          fi
+          APPS=$(pnpm exec nx show projects \
+            --affected \
+            --base="$BASE" \
+            --head="${{ needs.release.outputs.release_sha }}" \
+            --type=app \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+
+  docker-build:
+    name: Build & push Docker image (${{ matrix.app }})
+    needs: [release, get-affected-apps]
+    if: needs.get-affected-apps.outputs.apps != '[]'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.release.outputs.version }}
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.get-affected-apps.outputs.apps) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.release_sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build Docker image
+        run: pnpm exec nx run ${{ matrix.app }}:docker:build
+
+      - name: Tag and push to GHCR
+        run: |
+          NX_IMAGE="apps-${{ matrix.app }}"
+          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}"
+          docker tag  $NX_IMAGE  $GHCR_IMAGE:$VERSION
+          docker tag  $NX_IMAGE  $GHCR_IMAGE:staging
+          docker push $GHCR_IMAGE:$VERSION
+          docker push $GHCR_IMAGE:staging
+
+  create-github-release:
+    name: Create GitHub release
+    needs: [release, get-affected-apps, docker-build]
+    if: always() && needs.release.result == 'success' && needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.release_sha }}
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        run: |
+          curl -sSfL \
+            https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-x86_64-unknown-linux-gnu.tar.gz \
+            | tar xz -C /tmp git-cliff
+          sudo mv /tmp/git-cliff /usr/local/bin/git-cliff
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.release.outputs.version }}
+          APPS: ${{ needs.get-affected-apps.outputs.apps }}
+        run: |
+          BODY=$(git cliff --current --strip all)
+
+          IMAGES=""
+          if [ "$APPS" != "[]" ] && [ -n "$APPS" ]; then
+            IMAGES=$'\n\n### Published Images\n'
+            for APP in $(echo "$APPS" | jq -r '.[]'); do
+              IMAGES+="- \`ghcr.io/${{ github.repository_owner }}/${APP}:${VERSION}\`"$'\n'
+            done
+          fi
+
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes "${BODY}${IMAGES}"
+
+  deploy-staging:
+    name: Deploy to staging (${{ matrix.app }})
+    needs: [release, get-affected-apps, docker-build]
+    if: needs.docker-build.result == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.get-affected-apps.outputs.apps) }}
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}:staging"
+          echo "Version: ${{ needs.release.outputs.version }}"
+          # Replace with actual deployment command (docker pull + restart, kubectl, etc.)
+
+  deploy-production:
+    name: Deploy to production (${{ matrix.app }})
+    needs: [release, get-affected-apps, deploy-staging]
+    if: needs.deploy-staging.result == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.get-affected-apps.outputs.apps) }}
+    steps:
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Promote to latest and deploy
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          IMAGE="ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}"
+          docker pull  $IMAGE:$VERSION
+          docker tag   $IMAGE:$VERSION $IMAGE:latest
+          docker push  $IMAGE:latest
+          echo "Deploying $IMAGE:latest to production"
+          # Replace with actual deployment command

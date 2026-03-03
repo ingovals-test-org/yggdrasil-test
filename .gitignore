@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.nx/cache
+.nx/workspace-data
+*.user
+bin/
+obj/
+.next/
+out/
+tmp/
+storybook-static/
+next-env.d.ts

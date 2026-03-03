@@ -1,0 +1,6 @@
+{
+  "extends": ["@yggdrasil/config/biome/base.json", "@yggdrasil/config/biome/nextjs.json"],
+  "files": {
+    "includes": ["src/**", "app/**"]
+  }
+}

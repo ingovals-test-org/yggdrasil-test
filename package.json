@@ -1,0 +1,17 @@
+{
+  "name": "@yggdrasil/monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "nx": "22.5.3",
+    "@biomejs/biome": "catalog:",
+    "@nx/docker": "22.5.3",
+    "@nx/dotnet": "22.5.3",
+    "@nx/js": "22.5.3",
+    "typescript": "catalog:"
+  }
+}

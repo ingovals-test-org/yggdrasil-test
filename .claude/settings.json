@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "WebFetch(domain:nx.dev)",
+      "Bash(pnpm exec nx show project *)",
+      "Bash(ls *)",
+      "Bash(git *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(gh run watch *)",
+      "Bash(gh run rerun *)",
+      "Bash(gh api *)"
+    ]
+  }
+}

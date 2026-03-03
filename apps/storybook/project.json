@@ -1,0 +1,12 @@
+{
+  "name": "storybook",
+  "projectType": "application",
+  "tags": ["type:app"],
+  "targets": {
+    "docker:run": {
+      "options": {
+        "args": ["-p", "80:80"]
+      }
+    }
+  }
+}

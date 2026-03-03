@@ -1,0 +1,12 @@
+{
+  "name": "toolbox",
+  "projectType": "application",
+  "tags": ["type:app"],
+  "targets": {
+    "docker:run": {
+      "options": {
+        "args": ["-p","3000:3000"]
+      }
+    }
+  }
+}
