@@ -27,43 +27,34 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.24.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install git-cliff
-        run: |
-          curl -sSfL \
-            https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-x86_64-unknown-linux-gnu.tar.gz \
-            | tar xz -C /tmp git-cliff
-          sudo mv /tmp/git-cliff /usr/local/bin/git-cliff
-
       - name: Get previous tag
         id: prev-tag
         run: |
           PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
 
-      - name: Determine next version
+      - name: Generate changelog
+        id: cliff
+        continue-on-error: true
+        uses: orhun/git-cliff-action@v4
+        with:
+          args: --bump
+        env:
+          OUTPUT: CHANGELOG.md
+
+      - name: Resolve version
         id: version
         run: |
-          VERSION=$(git cliff --bumped-version 2>/dev/null || echo "")
-          VERSION=${VERSION#v}
-          if [ -z "$VERSION" ] || [ "v$VERSION" = "${{ steps.prev-tag.outputs.prev_tag }}" ]; then
+          CLIFF_VERSION="${{ steps.cliff.outputs.version }}"
+          VERSION="${CLIFF_VERSION#v}"
+          PREV="${{ steps.prev-tag.outputs.prev_tag }}"
+          if [ "${{ steps.cliff.outcome }}" != "success" ] || \
+             [ -z "$VERSION" ] || [ "v$VERSION" = "$PREV" ]; then
             echo "No version-bumping commits found. Skipping release."
             echo "version=" >> $GITHUB_OUTPUT
           else
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           fi
-
-      - name: Generate CHANGELOG.md
-        if: steps.version.outputs.version != ''
-        run: git cliff --bump -o CHANGELOG.md
 
       - name: Commit, tag and push
         id: push
@@ -175,32 +166,33 @@ jobs:
           ref: ${{ needs.release.outputs.release_sha }}
           fetch-depth: 0
 
-      - name: Install git-cliff
-        run: |
-          curl -sSfL \
-            https://github.com/orhun/git-cliff/releases/latest/download/git-cliff-x86_64-unknown-linux-gnu.tar.gz \
-            | tar xz -C /tmp git-cliff
-          sudo mv /tmp/git-cliff /usr/local/bin/git-cliff
+      - name: Generate release body
+        id: cliff-body
+        uses: orhun/git-cliff-action@v4
+        with:
+          args: --current --strip all
 
       - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.release.outputs.version }}
           APPS: ${{ needs.get-affected-apps.outputs.apps }}
+          CLIFF_CONTENT: ${{ steps.cliff-body.outputs.content }}
         run: |
-          BODY=$(git cliff --current --strip all)
+          NOTES=$(mktemp)
+          echo "$CLIFF_CONTENT" > "$NOTES"
 
-          IMAGES=""
           if [ "$APPS" != "[]" ] && [ -n "$APPS" ]; then
-            IMAGES=$'\n\n### Published Images\n'
+            echo "" >> "$NOTES"
+            echo "### Published Images" >> "$NOTES"
             for APP in $(echo "$APPS" | jq -r '.[]'); do
-              IMAGES+="- \`ghcr.io/${{ github.repository_owner }}/${APP}:${VERSION}\`"$'\n'
+              echo "- \`ghcr.io/${{ github.repository_owner }}/${APP}:${VERSION}\`" >> "$NOTES"
             done
           fi
 
           gh release create "v$VERSION" \
             --title "v$VERSION" \
-            --notes "${BODY}${IMAGES}"
+            --notes-file "$NOTES"
 
   deploy-staging:
     name: Deploy to staging (${{ matrix.app }})
