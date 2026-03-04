@@ -5,7 +5,7 @@ export default async function Index() {
     <div className='flex h-screen flex-col items-center justify-center gap-4'>
       <h1 className='font-bold text-4xl'>Þetta er Toolbox</h1>
       <p className='text-gray-600 text-lg'>Your one-stop shop for all your needs</p>
-      <Label >Get Started</Label>
+      <Label>Get Started</Label>
     </div>
   )
 }
