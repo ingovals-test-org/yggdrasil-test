@@ -1,4 +1,11 @@
 # Changelog
+## v0.3.0 — 2026-03-04
+
+### 🚀 Features
+
+- **toolbox:** Add about page  ([#10](https://github.com/ingovals-test-org/yggdrasil-test/pull/10)) — @programm-ingovals
+
+
 ## v0.2.0 — 2026-03-04
 
 ### 🚀 Features
