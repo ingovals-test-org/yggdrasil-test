@@ -49,10 +49,10 @@ gh api --method PUT "repos/$REPO/branches/main/protection" \
   "required_status_checks": {
     "strict": false,
     "contexts": [
-      "PR / Validate PR title",
-      "PR / Lint",
-      "PR / Test",
-      "PR / Build"
+      "Validate PR title",
+      "Lint",
+      "Test",
+      "Build"
     ]
   },
   "enforce_admins": false,
@@ -63,7 +63,7 @@ gh api --method PUT "repos/$REPO/branches/main/protection" \
     "bypass_pull_request_allowances": {
       "users": [],
       "teams": [],
-      "apps": ["github-actions"]
+      "apps": ["ingovals-test-org-ratatoskr"]
     }
   },
   "restrictions": null,
@@ -107,7 +107,7 @@ echo ""
 echo "All done! Summary:"
 echo "  ✓ Merge strategy: squash only, PR title as commit, branch commits as body, auto-delete branches"
 echo "  ✓ Branch protection on main:"
-echo "      Required checks: PR / Validate PR title, PR / Lint, PR / Test, PR / Build"
+echo "      Required checks: Validate PR title, Lint, Test, Build"
 echo "      Required approvals: 1"
 echo "      GitHub Actions bot: bypasses PR requirement (for release commits)"
 echo "  ✓ Environment 'staging': auto-deploys"

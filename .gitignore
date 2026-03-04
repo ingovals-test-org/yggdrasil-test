@@ -11,3 +11,4 @@ out/
 tmp/
 storybook-static/
 next-env.d.ts
+*.pem

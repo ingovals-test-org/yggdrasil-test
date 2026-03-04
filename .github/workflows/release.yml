@@ -21,11 +21,18 @@ jobs:
       release_sha: ${{ steps.push.outputs.release_sha }}
       prev_tag: ${{ steps.prev-tag.outputs.prev_tag }}
     steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Get previous tag
         id: prev-tag
@@ -61,8 +68,8 @@ jobs:
         if: steps.version.outputs.version != ''
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
+          git config user.email "ratatoskr[bot]@users.noreply.github.com"
+          git config user.name "ratatoskr[bot]"
           git add CHANGELOG.md
           git commit -m "chore(release): publish [skip ci]"
           git tag "v$VERSION"
