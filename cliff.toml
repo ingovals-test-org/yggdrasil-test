@@ -1,13 +1,24 @@
 [changelog]
 header = "# Changelog"
 body = """
+{%- macro remote_url() -%}
+  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+{%- endmacro -%}
 ## {{ version }} — {{ timestamp | date(format="%Y-%m-%d") }}
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group }}
 {% for commit in commits %}
 - {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message }}\
+{% if commit.remote.pr_number %} ([#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }})){% endif %}\
+{% if commit.remote.username %} — @{{ commit.remote.username }}{% endif %}
 {% endfor %}
 {% endfor %}
+{% if github.contributors | filter(attribute="is_first_time", value=true) | length > 0 %}
+### 🎉 New Contributors
+{% for contributor in github.contributors | filter(attribute="is_first_time", value=true) %}
+- @{{ contributor.username }} made their first contribution
+{% endfor %}
+{% endif %}
 """
 trim = true
 
@@ -17,6 +28,10 @@ filter_unconventional = true
 tag_pattern = "v[0-9].*"
 skip_tags = ""
 ignore_tags = ""
+
+commit_preprocessors = [
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
+]
 
 commit_parsers = [
   { message = "^feat!", group = "⚠️ Breaking Changes" },
