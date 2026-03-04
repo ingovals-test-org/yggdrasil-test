@@ -63,7 +63,7 @@ gh api --method PUT "repos/$REPO/branches/main/protection" \
     "bypass_pull_request_allowances": {
       "users": [],
       "teams": [],
-      "apps": ["github-actions"]
+      "apps": ["ingovals-test-org-ratatoskr"]
     }
   },
   "restrictions": null,
