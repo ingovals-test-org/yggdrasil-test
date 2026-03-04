@@ -30,7 +30,7 @@ gh api --method PATCH "repos/$REPO" \
   --field allow_merge_commit=false \
   --field allow_rebase_merge=false \
   --field squash_merge_commit_title="PR_TITLE" \
-  --field squash_merge_commit_message="BLANK" \
+  --field squash_merge_commit_message="COMMIT_MESSAGES" \
   --silent
 echo "      Done."
 
@@ -104,7 +104,7 @@ fi
 
 echo ""
 echo "All done! Summary:"
-echo "  ✓ Merge strategy: squash only, PR title as commit message"
+echo "  ✓ Merge strategy: squash only, PR title as commit, branch commits as body"
 echo "  ✓ Branch protection on main:"
 echo "      Required checks: PR / Validate PR title, PR / Lint, PR / Test, PR / Build"
 echo "      Required approvals: 1"
