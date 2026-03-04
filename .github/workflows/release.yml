@@ -48,6 +48,8 @@ jobs:
           args: --bump
         env:
           OUTPUT: CHANGELOG.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
 
       - name: Resolve version
         id: version
@@ -181,6 +183,9 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           args: --current --strip all
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
 
       - name: Create GitHub release
         env:
