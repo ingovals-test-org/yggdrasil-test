@@ -1,4 +1,9 @@
 # Changelog
+## v0.1.1 — 2026-03-04
+
+### 🐛 Bug Fixes
+
+- **ci:** remove status checks from main branch protection to allow app bypass (#6)
 ## v0.1.0 — 2026-03-04
 
 ### 🐛 Bug Fixes
