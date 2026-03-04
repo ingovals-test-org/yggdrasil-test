@@ -8,4 +8,7 @@
 	},
 	"typescript.preferences.organizeImportsOnSave": false,
 	"javascript.preferences.organizeImportsOnSave": false,
+	"conventionalCommits.scopes": [
+		"ui"
+	],
 }
