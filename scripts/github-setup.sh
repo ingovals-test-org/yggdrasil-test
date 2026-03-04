@@ -39,22 +39,16 @@ echo "      Done."
 # Status check names are "<workflow name> / <job name>" as they appear in
 # GitHub Actions. They are accepted by the API even before the first run.
 #
-# bypass_pull_request_allowances: the 'github-actions' app is allowed to push
-# directly to main (needed for the chore(release): publish commit).
+# Strategy: No required status checks on main branch (they are enforced at
+# PR level via the pr.yml workflow). This allows the ratatoskr app to push
+# release commits directly. PR reviews are still required, but the app can
+# bypass them using bypass_pull_request_allowances.
 echo "→ [2/4] Configuring branch protection on main..."
 gh api --method PUT "repos/$REPO/branches/main/protection" \
   --header "Accept: application/vnd.github+json" \
   --input - << 'PAYLOAD'
 {
-  "required_status_checks": {
-    "strict": false,
-    "contexts": [
-      "Validate PR title",
-      "Lint",
-      "Test",
-      "Build"
-    ]
-  },
+  "required_status_checks": null,
   "enforce_admins": false,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": false,
