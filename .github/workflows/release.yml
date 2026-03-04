@@ -66,7 +66,7 @@ jobs:
           git add CHANGELOG.md
           git commit -m "chore(release): publish [skip ci]"
           git tag "v$VERSION"
-          git push
+          git push origin HEAD:main
           git push origin "v$VERSION"
           echo "release_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
