@@ -17,18 +17,10 @@ jobs:
     name: Prepare release PR
     runs-on: ubuntu-latest
     steps:
-      - name: Generate app token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -103,20 +95,18 @@ jobs:
       - name: Create release branch and PR
         if: steps.version.outputs.version != ''
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
-          TARGET_SHA: ${{ github.sha }}
           APPS: ${{ steps.affected.outputs.apps }}
         run: |
-          git config user.email "ratatoskr[bot]@users.noreply.github.com"
-          git config user.name "ratatoskr[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
 
           git checkout -b release/v$VERSION
           git add CHANGELOG.md
           git commit -m "chore(release): v$VERSION [skip ci]"
           git push origin release/v$VERSION
 
-          # Build PR body with structured metadata for release-tag.yml to parse
           BODY=$(cat <<EOF
           ## Release v$VERSION
 
