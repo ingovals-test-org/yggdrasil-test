@@ -85,9 +85,10 @@ jobs:
           fi
 
       - name: Build Docker image
-        env:
-          VERSION: ${{ github.sha }}
-        run: pnpm exec nx run ${{ matrix.app }}:docker:build
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          export VERSION="0.0.0-sha-$SHORT_SHA"
+          pnpm exec nx run ${{ matrix.app }}:docker:build
 
       - name: Tag and push to GHCR
         run: |
