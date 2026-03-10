@@ -12,21 +12,20 @@ permissions:
 jobs:
   create-tag:
     name: Create release tag
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release')
+    # Only run for release PRs created by the automation bot — not human-authored PRs
+    if: |
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      apps: ${{ steps.metadata.outputs.apps }}
     steps:
-      - name: Generate app token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
 
       - name: Parse PR metadata
         id: metadata
@@ -47,7 +46,16 @@ jobs:
           VERSION: ${{ steps.metadata.outputs.version }}
           APPS: ${{ steps.metadata.outputs.apps }}
         run: |
-          git config user.email "ratatoskr[bot]@users.noreply.github.com"
-          git config user.name "ratatoskr[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
           git tag -a "v$VERSION" -m "apps: $APPS" HEAD
           git push origin "v$VERSION"
+
+  trigger-publish:
+    name: Trigger release publish
+    needs: create-tag
+    uses: ./.github/workflows/release-publish.yml
+    with:
+      version: ${{ needs.create-tag.outputs.version }}
+      apps: ${{ needs.create-tag.outputs.apps }}
+    secrets: inherit
