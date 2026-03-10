@@ -2,8 +2,7 @@
 # Configure GitHub repository settings for the NX monorepo release strategy.
 #
 # Usage:
-#   ./scripts/github-setup.sh                          # no production reviewers
-#   ./scripts/github-setup.sh alice bob                # add reviewers to production
+#   ./scripts/github-setup.sh
 #
 # Requirements:
 #   - gh CLI authenticated (gh auth login)
@@ -36,13 +35,8 @@ gh api --method PATCH "repos/$REPO" \
 echo "      Done."
 
 # ── 2. Branch protection on main ─────────────────────────────────────────────
-# Status check names are "<workflow name> / <job name>" as they appear in
-# GitHub Actions. They are accepted by the API even before the first run.
-#
-# Strategy: No required status checks on main branch (they are enforced at
-# PR level via the pr.yml workflow). This allows the ratatoskr app to push
-# release commits directly. PR reviews are still required, but the app can
-# bypass them using bypass_pull_request_allowances.
+# No required status checks on main — checks are enforced at PR level via
+# pr.yml. PR reviews are required; release PRs are merged by humans.
 echo "→ [2/4] Configuring branch protection on main..."
 gh api --method PUT "repos/$REPO/branches/main/protection" \
   --header "Accept: application/vnd.github+json" \
@@ -53,12 +47,7 @@ gh api --method PUT "repos/$REPO/branches/main/protection" \
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": false,
     "require_code_owner_reviews": false,
-    "required_approving_review_count": 1,
-    "bypass_pull_request_allowances": {
-      "users": [],
-      "teams": [],
-      "apps": ["ingovals-test-org-ratatoskr"]
-    }
+    "required_approving_review_count": 1
   },
   "restrictions": null,
   "allow_force_pushes": false,
@@ -67,46 +56,30 @@ gh api --method PUT "repos/$REPO/branches/main/protection" \
 PAYLOAD
 echo "      Done."
 
-# ── 3. Staging environment ───────────────────────────────────────────────────
-echo "→ [3/4] Creating 'staging' environment (no protection)..."
-gh api --method PUT "repos/$REPO/environments/staging" --silent
+# ── 3. Workflow permissions ───────────────────────────────────────────────────
+# Allow GitHub Actions to create pull requests (needed by release-prepare.yml).
+# Requires the org-level policy to permit this first.
+echo "→ [3/4] Enabling GitHub Actions to create pull requests..."
+gh api --method PUT "repos/$REPO/actions/permissions/workflow" \
+  --field default_workflow_permissions="write" \
+  --field can_approve_pull_request_reviews=true \
+  --silent
 echo "      Done."
 
-# ── 4. Production environment ────────────────────────────────────────────────
-echo "→ [4/4] Creating 'production' environment..."
-if [ "$#" -gt 0 ]; then
-  # Look up reviewer IDs from provided usernames and build JSON array
-  REVIEWERS=$(
-    for USERNAME in "$@"; do
-      USER_ID=$(gh api "users/$USERNAME" --jq '.id')
-      echo "{\"type\":\"User\",\"id\":$USER_ID}"
-    done | jq -s '.'
-  )
-
-  gh api --method PUT "repos/$REPO/environments/production" \
-    --input - <<EOF
-{
-  "reviewers": $REVIEWERS,
-  "deployment_branch_policy": null
-}
-EOF
-  echo "      Done. Reviewers: $*"
-else
-  gh api --method PUT "repos/$REPO/environments/production" --silent
-  echo "      Done. No reviewers set yet."
-  echo "      Add them at: https://github.com/$REPO/settings/environments"
-fi
+# ── 4. Labels ─────────────────────────────────────────────────────────────────
+echo "→ [4/4] Creating labels..."
+gh label create "release" --description "Release PR" --color "0052cc" --repo "$REPO" 2>/dev/null \
+  && echo "      Created 'release' label." \
+  || echo "      'release' label already exists, skipping."
 
 echo ""
 echo "All done! Summary:"
 echo "  ✓ Merge strategy: squash only, PR title as commit, branch commits as body, auto-delete branches"
-echo "  ✓ Branch protection on main:"
-echo "      Required checks: Validate PR title, Lint, Test, Build"
-echo "      Required approvals: 1"
-echo "      GitHub Actions bot: bypasses PR requirement (for release commits)"
-echo "  ✓ Environment 'staging': auto-deploys"
-echo "  ✓ Environment 'production': requires approval"
+echo "  ✓ Branch protection on main: required approvals: 1, no force pushes"
+echo "  ✓ GitHub Actions: write permissions, can create pull requests"
+echo "  ✓ Label 'release' exists"
 echo ""
-echo "Note: required status checks become 'active' only after the PR workflow"
-echo "runs on the first pull request. They are registered correctly in the API"
-echo "already and will resolve automatically."
+echo "Note: staging and production environments are referenced by the CI/release"
+echo "workflows. GitHub auto-creates them on first use. Add protection rules"
+echo "(reviewers, deployment branches) manually at:"
+echo "  https://github.com/$REPO/settings/environments"
