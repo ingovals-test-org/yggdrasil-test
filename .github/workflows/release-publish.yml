@@ -1,0 +1,108 @@
+name: Release - Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    name: Promote images & create GitHub release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      apps: ${{ steps.metadata.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Parse tag metadata
+        id: metadata
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          VERSION="${TAG_NAME#v}"
+
+          # Read apps list from annotated tag message
+          APPS=$(git tag -l --format='%(contents)' "$TAG_NAME" | grep -oP '(?<=apps: )\[.*\]')
+          if [ -z "$APPS" ]; then
+            echo "No apps list found in tag annotation. Aborting."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Promote rc images to versioned tags
+        env:
+          VERSION: ${{ steps.metadata.outputs.version }}
+          APPS: ${{ steps.metadata.outputs.apps }}
+        run: |
+          for APP in $(echo "$APPS" | jq -r '.[]'); do
+            IMAGE="ghcr.io/${{ github.repository_owner }}/$APP"
+            docker pull  $IMAGE:rc-v$VERSION
+            docker tag   $IMAGE:rc-v$VERSION  $IMAGE:$VERSION
+            docker push  $IMAGE:$VERSION
+          done
+
+      - name: Generate release body
+        id: cliff-body
+        uses: orhun/git-cliff-action@v4
+        with:
+          args: --current --strip all
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          APPS: ${{ steps.metadata.outputs.apps }}
+          CLIFF_CONTENT: ${{ steps.cliff-body.outputs.content }}
+        run: |
+          NOTES=$(mktemp)
+          echo "$CLIFF_CONTENT" > "$NOTES"
+
+          if [ "$APPS" != "[]" ] && [ -n "$APPS" ]; then
+            echo "" >> "$NOTES"
+            echo "### Published Images" >> "$NOTES"
+            for APP in $(echo "$APPS" | jq -r '.[]'); do
+              echo "- \`ghcr.io/${{ github.repository_owner }}/${APP}:${VERSION}\`" >> "$NOTES"
+            done
+          fi
+
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file "$NOTES"
+
+  deploy-production:
+    name: Deploy to production (${{ matrix.app }})
+    needs: publish
+    if: needs.publish.outputs.apps != '[]'
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.publish.outputs.apps) }}
+    steps:
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Promote to latest and deploy
+        run: |
+          VERSION="${{ needs.publish.outputs.version }}"
+          IMAGE="ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}"
+          docker pull  $IMAGE:$VERSION
+          docker tag   $IMAGE:$VERSION  $IMAGE:latest
+          docker push  $IMAGE:latest
+          echo "Deploying $IMAGE:latest to production"
+          # Replace with actual deployment command

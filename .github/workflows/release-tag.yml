@@ -1,0 +1,53 @@
+name: Release - Tag
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  create-tag:
+    name: Create release tag
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Parse PR metadata
+        id: metadata
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          VERSION=$(echo "$PR_BODY" | grep -oP '(?<=version: )\S+')
+          APPS=$(echo "$PR_BODY" | grep -oP '(?<=apps: )\[.*\]')
+          if [ -z "$VERSION" ] || [ -z "$APPS" ]; then
+            echo "Could not parse release metadata from PR body. Aborting."
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+
+      - name: Create and push annotated tag
+        env:
+          VERSION: ${{ steps.metadata.outputs.version }}
+          APPS: ${{ steps.metadata.outputs.apps }}
+        run: |
+          git config user.email "ratatoskr[bot]@users.noreply.github.com"
+          git config user.name "ratatoskr[bot]"
+          git tag -a "v$VERSION" -m "apps: $APPS" HEAD
+          git push origin "v$VERSION"

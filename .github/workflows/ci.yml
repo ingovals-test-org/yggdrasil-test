@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  get-affected-apps:
+    name: Get affected apps
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.affected.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Determine affected apps
+        id: affected
+        run: |
+          APPS=$(pnpm exec nx show projects \
+            --affected \
+            --base=HEAD~1 \
+            --head=HEAD \
+            --type=app \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+
+  docker-build:
+    name: Build & push Docker image (${{ matrix.app }})
+    needs: get-affected-apps
+    if: needs.get-affected-apps.outputs.apps != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.get-affected-apps.outputs.apps) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Restore
+        run: |
+          if pnpm exec nx show project ${{ matrix.app }} --json | jq -e '.targets | has("restore")' > /dev/null 2>&1; then
+            pnpm exec nx run ${{ matrix.app }}:restore
+          fi
+
+      - name: Build Docker image
+        env:
+          VERSION: ${{ github.sha }}
+        run: pnpm exec nx run ${{ matrix.app }}:docker:build
+
+      - name: Tag and push to GHCR
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          NX_IMAGE="apps-${{ matrix.app }}"
+          GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}"
+          docker tag  $NX_IMAGE  $GHCR_IMAGE:sha-$SHORT_SHA
+          docker tag  $NX_IMAGE  $GHCR_IMAGE:staging
+          docker push $GHCR_IMAGE:sha-$SHORT_SHA
+          docker push $GHCR_IMAGE:staging
+
+  deploy-staging:
+    name: Deploy to staging (${{ matrix.app }})
+    needs: [get-affected-apps, docker-build]
+    if: needs.docker-build.result == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.get-affected-apps.outputs.apps) }}
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}:staging"
+          # Replace with actual deployment command (docker pull + restart, kubectl, etc.)
