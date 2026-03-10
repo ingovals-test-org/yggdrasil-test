@@ -3,6 +3,12 @@ name: CI
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Base ref for nx affected (tag, SHA, or branch). Defaults to last git tag."
+        required: false
+        default: ""
 
 concurrency:
   group: ci-main
@@ -38,9 +44,17 @@ jobs:
       - name: Determine affected apps
         id: affected
         run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            BASE="${{ inputs.base }}"
+            if [ -z "$BASE" ]; then
+              BASE=$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)
+            fi
+          else
+            BASE="HEAD~1"
+          fi
           APPS=$(pnpm exec nx show projects \
             --affected \
-            --base=HEAD~1 \
+            --base="$BASE" \
             --head=HEAD \
             --type=app \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')
