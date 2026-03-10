@@ -50,6 +50,13 @@ export const Ghost: Story = {
   },
 }
 
+export const Link: Story = {
+  args: {
+    variant: 'link',
+    children: 'Button',
+  },
+}
+
 export const Large: Story = {
   args: {
     size: 'lg',
