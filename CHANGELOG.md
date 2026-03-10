@@ -1,4 +1,11 @@
 # Changelog
+## v0.4.0 — 2026-03-10
+
+### 🚀 Features
+
+- **toolbox:** Add a contact page  ([#11](https://github.com/ingovals-test-org/yggdrasil-test/pull/11)) — @programm-ingovals
+
+
 ## v0.3.0 — 2026-03-04
 
 ### 🚀 Features
