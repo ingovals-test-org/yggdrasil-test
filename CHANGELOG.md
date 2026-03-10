@@ -1,4 +1,24 @@
 # Changelog
+## v0.5.0 — 2026-03-10
+
+### 🐛 Bug Fixes
+
+- **toolbox:** Fix contact page header  ([#13](https://github.com/ingovals-test-org/yggdrasil-test/pull/13)) — @programm-ingovals
+
+- **ci:** use valid semver for VERSION in non-release Docker builds  ([#16](https://github.com/ingovals-test-org/yggdrasil-test/pull/16)) — @programm-ingovals
+
+- **ci:** guard trigger-publish with explicit if condition  ([#18](https://github.com/ingovals-test-org/yggdrasil-test/pull/18)) — @programm-ingovals
+
+- **ci:** replace workflow_call with gh workflow run to fix startup_failure  ([#19](https://github.com/ingovals-test-org/yggdrasil-test/pull/19)) — @programm-ingovals
+
+
+### 🚀 Features
+
+- **storybook:** Add story variant to buttons for link  ([#15](https://github.com/ingovals-test-org/yggdrasil-test/pull/15)) — @programm-ingovals
+
+- **sample-dotnet-library:** Added glacial temperature scale  ([#14](https://github.com/ingovals-test-org/yggdrasil-test/pull/14)) — @programm-ingovals
+
+
 ## v0.4.0 — 2026-03-10
 
 ### 🚀 Features
