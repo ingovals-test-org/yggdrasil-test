@@ -12,6 +12,16 @@ on:
       apps:
         type: string
         required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: "Version to release (e.g. 1.2.3)"
+      apps:
+        type: string
+        required: true
+        description: 'JSON array of apps to publish (e.g. ["toolbox"])'
 
 permissions:
   contents: write
@@ -27,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_call' && github.sha || github.ref }}
+          ref: ${{ (github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch') && github.sha || github.ref }}
           fetch-depth: 0
 
       - name: Fetch tags
@@ -36,7 +46,7 @@ jobs:
       - name: Parse metadata
         id: metadata
         run: |
-          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+          if [ "${{ github.event_name }}" = "workflow_call" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
             APPS='${{ inputs.apps }}'
           else
