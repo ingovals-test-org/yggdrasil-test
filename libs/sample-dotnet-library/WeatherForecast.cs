@@ -9,7 +9,7 @@ public class WeatherForecastService
 {
     private static readonly string[] summaries = new[]
     {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        "glacial", "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     };
 
     public WeatherForecast[] GetWeatherForecast()
