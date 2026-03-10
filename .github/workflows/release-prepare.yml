@@ -1,0 +1,137 @@
+name: Release - Prepare
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release-prepare
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    name: Prepare release PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Get previous tag
+        id: prev-tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: cliff
+        continue-on-error: true
+        uses: orhun/git-cliff-action@v4
+        with:
+          args: --bump
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Resolve version
+        id: version
+        run: |
+          CLIFF_VERSION="${{ steps.cliff.outputs.version }}"
+          VERSION="${CLIFF_VERSION#v}"
+          PREV="${{ steps.prev-tag.outputs.prev_tag }}"
+          if [ "${{ steps.cliff.outcome }}" != "success" ] || \
+             [ -z "$VERSION" ] || [ "v$VERSION" = "$PREV" ]; then
+            echo "No version-bumping commits found. Nothing to release."
+            echo "version=" >> $GITHUB_OUTPUT
+          else
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine affected apps
+        id: affected
+        if: steps.version.outputs.version != ''
+        run: |
+          BASE="${{ steps.prev-tag.outputs.prev_tag }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-list --max-parents=0 HEAD)
+          fi
+          APPS=$(pnpm exec nx show projects \
+            --affected \
+            --base="$BASE" \
+            --head=HEAD \
+            --type=app \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+
+      - name: Snapshot release candidate images
+        if: steps.version.outputs.version != '' && steps.affected.outputs.apps != '[]'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          VERSION="${{ steps.version.outputs.version }}"
+          for APP in $(echo '${{ steps.affected.outputs.apps }}' | jq -r '.[]'); do
+            IMAGE="ghcr.io/${{ github.repository_owner }}/$APP"
+            docker pull  $IMAGE:staging
+            docker tag   $IMAGE:staging  $IMAGE:rc-v$VERSION
+            docker push  $IMAGE:rc-v$VERSION
+          done
+
+      - name: Create release branch and PR
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TARGET_SHA: ${{ github.sha }}
+          APPS: ${{ steps.affected.outputs.apps }}
+        run: |
+          git config user.email "ratatoskr[bot]@users.noreply.github.com"
+          git config user.name "ratatoskr[bot]"
+
+          git checkout -b release/v$VERSION
+          git add CHANGELOG.md
+          git commit -m "chore(release): v$VERSION [skip ci]"
+          git push origin release/v$VERSION
+
+          # Build PR body with structured metadata for release-tag.yml to parse
+          BODY=$(cat <<EOF
+          ## Release v$VERSION
+
+          <!-- release-metadata
+          version: $VERSION
+          apps: $APPS
+          -->
+
+          $(git cliff --current --strip header 2>/dev/null || cat CHANGELOG.md | head -50)
+          EOF
+          )
+
+          gh pr create \
+            --title "chore(release): v$VERSION" \
+            --body "$BODY" \
+            --label "release" \
+            --base main \
+            --head release/v$VERSION
